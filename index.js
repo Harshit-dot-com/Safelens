@@ -111,6 +111,20 @@ wss.on("connection",function(conn){
                     });
                 }
             break;
+            case "leave":
+                var connect = users[data.name];
+                connect.otherUser = null;
+                if(connect!=null){
+                    sentToOtherUser(connect,{
+                        type: "leave",
+                    });
+                }
+            break;
+            default:
+                sentToOtherUser(connect,{
+                    type: "error",
+                    message: data.type
+                });
         }
 
     });

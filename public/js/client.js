@@ -20,9 +20,37 @@ connection.onmessage = function(msg){
 
             call_accept.addEventListener("click",function(){
                 offerProcess(data.offer,data.name);
-                call_status.innerHTML = '';
+                call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
                 console.log(data);
                 acceptCall(data.name);
+                var video_toggle = document.querySelector(".videocam-on");
+                var audio_toggle = document.querySelector(".audio-on");
+
+
+                video_toggle.onclick = function(){
+                    stream.getVideoTracks()[0].enabled = !(stream.getVideoTracks()[0].enabled);
+                    
+                    var video_toggle_class = document.querySelector('.video-toggle');
+                    if(video_toggle_class.innerText == 'videocam'){
+                        video_toggle_class.innerText ='videocam_off';
+                    }
+                    else{
+                        video_toggle_class.innerText = 'videocam';
+                    }
+
+                }
+                audio_toggle.onclick = function(){
+                    stream.getAudioTracks()[0].enabled = !(stream.getAudioTracks()[0].enabled);
+                    
+                    var audio_toggle_class = document.querySelector('.audio-toggle');
+                    if(audio_toggle_class.innerText == 'mic'){
+                        audio_toggle_class.innerText ='mic_off';
+                    }
+                    else{
+                        audio_toggle_class.innerText = 'mic';
+                    }
+
+                }
             });
 
             call_reject.addEventListener("click",function(){
@@ -51,6 +79,11 @@ connection.onmessage = function(msg){
         break;
         case "accept":
             acceptProcess();
+        break;
+        case "leave":
+            leaveProcess();
+        break;
+        default:
         break;
     }
 }
@@ -162,6 +195,40 @@ function onlineProcess(success){
                 myConn.addStream(stream);
                 myConn.onaddstream = function(e){
                     remote_video.srcObject = e.stream;
+
+                    
+                    call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
+                    var video_toggle = document.querySelector(".videocam-on");
+                    var audio_toggle = document.querySelector(".audio-on");
+
+
+                    video_toggle.onclick = function(){
+                        stream.getVideoTracks()[0].enabled = !(stream.getVideoTracks()[0].enabled);
+                        
+                        var video_toggle_class = document.querySelector('.video-toggle');
+                        if(video_toggle_class.innerText == 'videocam'){
+                            video_toggle_class.innerText ='videocam_off';
+                        }
+                        else{
+                            video_toggle_class.innerText = 'videocam';
+                        }
+
+                    }
+                    audio_toggle.onclick = function(){
+                        stream.getAudioTracks()[0].enabled = !(stream.getAudioTracks()[0].enabled);
+                        
+                        var audio_toggle_class = document.querySelector('.audio-toggle');
+                        if(audio_toggle_class.innerText == 'mic'){
+                            audio_toggle_class.innerText ='mic_off';
+                        }
+                        else{
+                            audio_toggle_class.innerText = 'mic';
+                        }
+
+                    }
+
+                    hangUp();
+
                 }
 
                 myConn.onicecandidate = function(event){
@@ -258,6 +325,28 @@ function acceptProcess(){
     call_status.innerHTML = '';
 }
 
+function hangUp(){
+    var call_cancel = document.querySelector('.call-cancel');
+    call_cancel.addEventListener("click",function(){
+
+        send({
+            type: "leave",
+
+        });
+        leaveProcess();
+
+    });
+}
+
+function leaveProcess()
+{
+    call_btn.removeAttribute("disabled");
+    call_status.innerHTML = '';
+    remote_video.src = null;
+    myConn.close();
+    connectedUser = null;
+
+}
 
 
 
