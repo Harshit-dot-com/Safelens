@@ -1,0 +1,42 @@
+<%- include('layouts/header.ejs') %>
+
+    <div class="login-wrap">
+        <div class="row">
+            <div class="col s12 m8 l4 offset-m2 offset-l4">
+                <div class="card">
+                    <div class="card-action teal lighten-1 white-text">
+                        <h3>Login</h3>
+                    </div>
+                    <div class="card-content">
+                        <form action="" method="POST">
+                            <div class="form-field">
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="password">Password</label>
+                                <input type="password" name="password" id="password" required>
+                            </div>
+                            <br>
+                            <div class="form-field">
+                                <button type="submit" class="webrtc-login btn-large waves-effect waves-dark">
+                                    Login
+                                </button>
+                                <a href="/register">Register</a>
+                            </div>
+                        </form>
+                        <% 
+                            if(typeof message !== 'undefined'){
+                                
+                                %>
+                                    <p style="color:red;"><%= message %></p>
+                                <%
+                            }
+                        %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<%- include('layouts/footer.ejs') %>
