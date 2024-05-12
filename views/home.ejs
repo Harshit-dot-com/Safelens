@@ -4,28 +4,38 @@
     username = "<%= user.name %>".toLowerCase();
     var userImage = null;
     userImage = "<%= user.image %>";
-
-
-
 </script>
-<a class="btn" style="float: right;" href="/logout">Logout</a>
 
-    <div class="main-wrap">
-        <div class="call-wrap card" style="z-index: 99">
-            <video id="local-video" autoplay></video>
-            <div class="row remote-video-wrap" style="position: relative;">
-                <div class="call-hang-status" style="position: absolute; z-index:999">
+<nav class="navbar">
+    <div class="navbar-left">
+        <a class="navbar-brand" href="#">Safe Lens</a>
+    </div>
+    <div class="navbar-right">
+        <button class="btn-navbar" id="profile-btn">Profile</button>
+        <button class="btn-navbar">Call</button>
+        <a class="btn-navbar" id="logout-btn" href="/logout">Logout</a>
+    </div>
+</nav>
 
-                </div>
-                <video id="remote-video" autoplay></video>
-            </div>
-            <div class="row">
-                <div class="col m12">
-                    <input type="text" name="" id="username-input" placeholder="Username">
-                    <button id="call-btn" class="btn waves-effect"> Call</button>
-                </div>
+<div class="main-wrap">
+    <div class="call-wrap card" style="z-index: 99">
+        <video id="local-video" autoplay></video>
+        <div class="row remote-video-wrap" style="position: relative;">
+            <div class="call-hang-status" style="position: absolute; z-index:999"></div>
+            <video id="remote-video" autoplay></video>
+        </div>
+        <div class="row">
+            <div class="col m12">
+                <input type="text" name="" id="username-input" placeholder="Username">
+                <button id="call-btn" class="btn waves-effect">Start Call</button>
             </div>
         </div>
     </div>
-    <script src ="/js/client.js"></script>
-<%- include('layouts/footer.ejs') %>
+</div>
+
+<script src="/js/client.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="/js/materialize.min.js"></script>
+</body>
+
+</html>

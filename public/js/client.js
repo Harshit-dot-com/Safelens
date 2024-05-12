@@ -4,6 +4,7 @@ connection.onopen = function(){
     console.log('connected to server');
 }
 
+
 connection.onmessage = function(msg){
     var data = JSON.parse(msg.data);
 
@@ -20,12 +21,11 @@ connection.onmessage = function(msg){
 
             call_accept.addEventListener("click",function(){
                 offerProcess(data.offer,data.name);
-                call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
+                call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="screen-share"><i class="material-icons teal darken-2 white-text screen-share">screen_share</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
                 console.log(data);
                 acceptCall(data.name);
                 var video_toggle = document.querySelector(".videocam-on");
                 var audio_toggle = document.querySelector(".audio-on");
-
 
                 video_toggle.onclick = function(){
                     stream.getVideoTracks()[0].enabled = !(stream.getVideoTracks()[0].enabled);
@@ -51,6 +51,8 @@ connection.onmessage = function(msg){
                     }
 
                 }
+                                
+
             });
 
             call_reject.addEventListener("click",function(){
@@ -82,8 +84,6 @@ connection.onmessage = function(msg){
         break;
         case "leave":
             leaveProcess();
-        break;
-        default:
         break;
     }
 }
@@ -189,10 +189,38 @@ function successProcess(stream){
             remote_video.srcObject = e.stream;
 
             
-            call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
+            call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="screen-share"><i class="material-icons teal darken-2 white-text screen-share">screen_share</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
             var video_toggle = document.querySelector(".videocam-on");
             var audio_toggle = document.querySelector(".audio-on");
-
+            var screen_share = document.querySelector(".screen-share");
+            const senders = myConn.getSenders();
+            screen_share.onclick = function (){
+                (async () => {
+                    try {
+                        await navigator.mediaDevices.getDisplayMedia(
+                            {
+                                cursor: true
+                            }).then(stream => {
+                                // localStream = stream;
+                                let videoTrack = stream.getVideoTracks()[0];
+                                
+                                var sender = senders.find(function(s) {
+                                    return s.track.kind == videoTrack.kind;
+                                });
+                                sender.replaceTrack(videoTrack);
+                                videoTrack.onended = function(){
+                                    sender.replaceTrack(localStream.getTracks()[1]);
+                                }
+                                local_video.srcObject = stream;
+                            });
+                    } catch (err) {
+                        console.log('(async () =>: ' + err);
+                    }
+                })();
+            }
+            
+            
+            
 
             video_toggle.onclick = function(){
                 stream.getVideoTracks()[0].enabled = !(stream.getVideoTracks()[0].enabled);
@@ -250,6 +278,18 @@ function onlineProcess(success){
     }
 }
 
+function onlineProcess2(success){
+    if(success){
+        navigator.mediaDevices.getDisplayMedia({
+            audio: true,
+            video:true,
+        }).then(successProcess,errorProcess)
+    }
+    else{
+        console.log("success falied");
+    }
+}
+
 function offerProcess(offer,name){
     connectedUser = name;
     console.log(connectedUser);
@@ -266,6 +306,23 @@ function offerProcess(offer,name){
         console.log("error in answer",error);
     })
 }
+function screenProcess() {
+    // Call the screen sharing function when the button is clicked
+    navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true
+    }).then(function(screenStream) {
+        // Display the screen sharing stream on the remote video element
+        remote_video.srcObject = screenStream;
+
+        // Add the screen sharing stream to the peer connection
+        screenStream.getTracks().forEach(track => myConn.addTrack(track, screenStream));
+    }).catch(function(error) {
+        console.error('Error accessing screen:', error);
+    });
+};
+
+
 
 function answerProcess(answer){
     myConn.setRemoteDescription(new RTCSessionDescription(answer));
@@ -316,6 +373,7 @@ function acceptCall(caller_name){
 function acceptProcess(){
     call_status.innerHTML = '';
 }
+
 
 function hangUp(){
     var call_cancel = document.querySelector('.call-cancel');

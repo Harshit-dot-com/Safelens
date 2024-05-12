@@ -120,11 +120,34 @@ wss.on("connection",function(conn){
                     });
                 }
             break;
+            case "screen":
+                var connect = users[data.name];
+                if(connect!=null){
+                    sentToOtherUser(connect,{
+                        type: "screen",
+                        candidate: data.candidate
+                    });
+                }
+            break;
+            case "screen":
+                var connect = users[data.name];
+                if (connect != null && connect.otherUser != null) {
+                    // Forward the screen sharing stream to the other user
+                    var otherUserConn = users[connect.otherUser];
+                    if (otherUserConn != null) {
+                        sentToOtherUser(otherUserConn, {
+                            type: "screen",
+                            screenStream: data.screenStream
+                        });
+                    }
+                }
+                break;
             default:
                 sentToOtherUser(connect,{
                     type: "error",
                     message: data.type
                 });
+
         }
 
     });
