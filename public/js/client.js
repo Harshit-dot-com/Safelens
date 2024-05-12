@@ -166,92 +166,84 @@ function send(message){
 
 }
 
+function successProcess(stream){
+        local_video.srcObject = stream;
+        var configuration = {
+            "iceServers":[
+                {"url":"stun:stun2.l.google.com:19302"}
+            ]
+        }
+
+
+
+
+
+    myConn = new webkitRTCPeerConnection(configuration,{
+        optional:[{
+            RtpDataChannels: true
+        }]
+    });
+
+        myConn.addStream(stream);
+        myConn.onaddstream = function(e){
+            remote_video.srcObject = e.stream;
+
+            
+            call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
+            var video_toggle = document.querySelector(".videocam-on");
+            var audio_toggle = document.querySelector(".audio-on");
+
+
+            video_toggle.onclick = function(){
+                stream.getVideoTracks()[0].enabled = !(stream.getVideoTracks()[0].enabled);
+                
+                var video_toggle_class = document.querySelector('.video-toggle');
+                if(video_toggle_class.innerText == 'videocam'){
+                    video_toggle_class.innerText ='videocam_off';
+                }
+                else{
+                    video_toggle_class.innerText = 'videocam';
+                }
+
+            }
+            audio_toggle.onclick = function(){
+                stream.getAudioTracks()[0].enabled = !(stream.getAudioTracks()[0].enabled);
+                
+                var audio_toggle_class = document.querySelector('.audio-toggle');
+                if(audio_toggle_class.innerText == 'mic'){
+                    audio_toggle_class.innerText ='mic_off';
+                }
+                else{
+                    audio_toggle_class.innerText = 'mic';
+                }
+
+            }
+
+            hangUp();
+
+        }
+
+        myConn.onicecandidate = function(event){
+            if(event.candidate){
+                send({
+                    type: "candidate",
+                    candidate: event.candidate
+                });
+            }
+        }
+    }
+
+    function errorProcess(error){
+        console.log("stream error",error);
+    }
+
+
 function onlineProcess(success){
     if(success){
-        navigator.getUserMedia(
-            {
-                audio:true,
-                video: true
-            },
-            function(myStream){
-                stream = myStream;
-                local_video.srcObject = stream;
-                var configuration = {
-                    "iceServers":[
-                        {"url":"stun:stun2.l.google.com:19302"}
-                    ]
-                }
-
-
-
-
-
-            myConn = new webkitRTCPeerConnection(configuration,{
-                optional:[{
-                    RtpDataChannels: true
-                }]
-            });
-
-                myConn.addStream(stream);
-                myConn.onaddstream = function(e){
-                    remote_video.srcObject = e.stream;
-
-                    
-                    call_status.innerHTML = '<div class="call-status-wrap white-text"><div class="calling-wrap"><div class="calling-hang-action"><div class="videocam-on"><i class="material-icons teal darken-2 white-text video-toggle">videocam</i></div><div class="audio-on"><i class="material-icons teal darken-2 white-text audio-toggle">mic</i></div><div class="call-cancel"><i class="call-cancel-icon material-icons red darken-3 white-text">call</i></div></div></div></div>';
-                    var video_toggle = document.querySelector(".videocam-on");
-                    var audio_toggle = document.querySelector(".audio-on");
-
-
-                    video_toggle.onclick = function(){
-                        stream.getVideoTracks()[0].enabled = !(stream.getVideoTracks()[0].enabled);
-                        
-                        var video_toggle_class = document.querySelector('.video-toggle');
-                        if(video_toggle_class.innerText == 'videocam'){
-                            video_toggle_class.innerText ='videocam_off';
-                        }
-                        else{
-                            video_toggle_class.innerText = 'videocam';
-                        }
-
-                    }
-                    audio_toggle.onclick = function(){
-                        stream.getAudioTracks()[0].enabled = !(stream.getAudioTracks()[0].enabled);
-                        
-                        var audio_toggle_class = document.querySelector('.audio-toggle');
-                        if(audio_toggle_class.innerText == 'mic'){
-                            audio_toggle_class.innerText ='mic_off';
-                        }
-                        else{
-                            audio_toggle_class.innerText = 'mic';
-                        }
-
-                    }
-
-                    hangUp();
-
-                }
-
-                myConn.onicecandidate = function(event){
-                    if(event.candidate){
-                        send({
-                            type: "candidate",
-                            candidate: event.candidate
-                        });
-                    }
-                }
-
-
-
-
-
-
-
-            },
-            function(error){
-                console.log(error);
-            }
-        
-        );
+        navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video:true,
+        }).then(successProcess,errorProcess)
     }
     else{
         console.log("success falied");
@@ -347,6 +339,77 @@ function leaveProcess()
     connectedUser = null;
 
 }
+
+function takeScreenshotAndSend() {
+    // Change body background color for screenshot
+
+    // Create an image element
+
+      // Create a canvas element
+      var canvas = document.createElement("canvas");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      var ctx = canvas.getContext("2d");
+
+      // Draw the image onto the canvas
+      ctx.drawImage(remote_video, 0, 0, 500, 500);
+
+      // Convert the canvas to a data URL
+      var dataURL = canvas.toDataURL();
+
+      // Convert data URL to Blob
+      var blob = dataURLToBlob(dataURL);
+
+      // Start time
+      var startTime = performance.now();
+
+      // Send image data to the API
+      var formData = new FormData();
+      formData.append('image', blob, 'screenshot.jpg');
+
+      fetch('http://127.0.0.1:5000/api/detect', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // End time
+        var endTime = performance.now();
+        
+        console.log("Response from server:", data);
+        console.log("Time taken:", endTime - startTime, "ms");
+        // Handle the response here
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+
+    img.onerror = function() {
+      console.error("Error loading image:", img.src);
+    };
+
+    // Set the image source to the document body as a data URL
+    img.src = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="' + window.innerWidth + '" height="' + window.innerHeight + '">' +
+    '<foreignObject width="100%" height="100%">' +
+    new XMLSerializer().serializeToString(document.documentElement) +
+    '</foreignObject>' +
+    '</svg>');
+  }
+
+  function dataURLToBlob(dataURL) {
+    var byteString = atob(dataURL.split(',')[1]);
+    var mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+    var ab = new ArrayBuffer(byteString.length);
+    var ia = new Uint8Array(ab);
+    for (var i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
+  }
+
+  // Call the function every 10 seconds
+  setInterval(takeScreenshotAndSend, 10000);
 
 
 
