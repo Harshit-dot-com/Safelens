@@ -1,5 +1,5 @@
 var connection = new WebSocket("ws://localhost:8000");
-
+// const User = require('../models/userModel');
 connection.onopen = function(){
     console.log('connected to server');
 }
@@ -15,7 +15,9 @@ connection.onmessage = function(msg){
         break;
         case "offer":
             call_btn.setAttribute("disabled","disabled");
-            call_status.innerHTML = '<div class="calling-status-wrap card black white-text"> <div class="user-image"> <img src="'+data.image+'" class="caller-image circle" alt=""> </div> <div class="user-name">'+data.name+'</div> <div class="user-calling-status">Calling...</div> <div class="calling-action"> <div class="call-accept"><i class="material-icons green darken-2 white-text audio-icon">call</i></div> <div class="call-reject"><i class="material-icons red darken-3 white-text close-icon">close</i></div> </div> </div>'
+            call_status.innerHTML = '<div class="calling-status-wrap card black white-text"> <div class="user-image"> <img src="images/user.png" class="caller-image circle" alt=""> </div> <div class="user-name">'+data.name+'</div> <div class="user-calling-status">Calling...</div> <div class="calling-action"> <div class="call-accept"><i class="material-icons green darken-2 white-text audio-icon">call</i></div> <div class="call-reject"><i class="material-icons red darken-3 white-text close-icon">close</i></div> </div> </div>'
+
+            setUserProfile(data.name);
             var call_accept = document.querySelector('.call-accept');
             var call_reject = document.querySelector('.call-reject');
 
@@ -111,7 +113,9 @@ call_btn.addEventListener("click",function(){
             console.log("you cant call urself");
         }
         else{
+            
             call_status.innerHTML = '<div class="calling-status-wrap card black white-text"> <div class="user-image"> <img src="images/user.png" class="caller-image circle" alt=""> </div> <div class="user-name">unknown</div> <div class="user-calling-status">Calling...</div> <div class="calling-action"> <div class="call-reject"><i class="material-icons red darken-3 white-text close-icon">close</i></div> </div> </div>'
+            
             setUserProfile(connectedUser);
             var call_reject = document.querySelector('.call-reject');
             call_reject.addEventListener("click",function(){
@@ -126,7 +130,7 @@ call_btn.addEventListener("click",function(){
                 send({
                     type:"offer",
                     offer: offer,
-                    image: userImage
+                    image : userImage
                 });
                 myConn.setLocalDescription(offer);
             },function(error){
@@ -338,18 +342,24 @@ function setUserProfile(name){
     xhtr.send();
 
     xhtr.onreadystatechange = function(){
-        if(this.readyState==4 && this.status==200){
+        if(this.readyState == 4 && this.status == 200){
             var obj = JSON.parse(this.responseText);
             if(obj.success){
                 var data = obj.data;
                 var caller_image = document.querySelector('.caller-image');
                 var user_name = document.querySelector('.user-name');
-                caller_image.setAttribute('src',data.image);
+
+                // Assuming `data.image` contains the base64 buffer of the image
+                var imageBase64 = data.image; // buffer in base64 format
+                var imageSrc = 'data:image/jpeg;base64,' + imageBase64; // or image/png depending on the format
+                console.log(imageSrc);
+                caller_image.setAttribute('src', imageSrc);
                 user_name.innerHTML = data.name;
             }
         }
     };
 }
+
 
 function rejectedCall(rejected_user){
     send({
@@ -436,6 +446,11 @@ function takeScreenshotAndSend() {
         var endTime = performance.now();
         
         console.log("Response from server:", data);
+        
+        if(data.final_detection){
+            alert('Sender is violating Protocol');
+            // leaveProcess();
+        }
         console.log("Time taken:", endTime - startTime, "ms");
         // Handle the response here
       })

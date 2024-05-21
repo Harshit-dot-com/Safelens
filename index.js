@@ -5,7 +5,7 @@ const app = express();
 
 var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.0.0.1:27017/video-call-app');
+mongoose.connect('mongodb+srv://harshitkumar4977:euaQJtI8WxjVE6c1@harshit.jus48fd.mongodb.net/VideoCallDB');
 
 app.listen(3000, ()=>{
     console.log('Server is running');

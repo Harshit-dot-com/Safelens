@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
-
+// const fs = require('fs').promises;
+// const path = require('path');
 const bcrypt = require('bcrypt');
 
 const loadLogin = async(req,res)=>{
@@ -51,35 +52,50 @@ const loadRegister = async(req,res) => {
 
 }
 
-const register = async(req, res)=>{
-
+const register = async (req, res) => {
     try {
-
-        var isUser = await User.findOne({name: {$regex: req.body.name, $options: 'i'} });
-        if(isUser){
-            res.render('register',{ success:false,message: 'This User Name ('+req.body.name+') is already exists!' });
-        }
-        else{
-
-            const passwordHash = await bcrypt.hash(req.body.password, 10);
-
-            const user = new User({
-                name: req.body.name,
-                email: req.body.email,
-                image: 'images/'+req.file.filename,
-                password: passwordHash
+        // Check if the user already exists
+        const isUser = await User.findOne({ name: { $regex: req.body.name, $options: 'i' } });
+        if (isUser) {
+            return res.status(400).json({
+                success: false,
+                message: `This User Name (${req.body.name}) already exists!`
             });
-
-            await user.save();
-
-            res.render('register',{ success:true, message: 'Your Registration has beend Completed!' });
         }
-        
-    } catch (error) {
-        console.log(error.message);
-    }
 
-}
+        // Hash the password
+        const passwordHash = await bcrypt.hash(req.body.password, 10);
+
+        // Convert the Base64 image string back to binary data
+        const imageBase64 = req.body.imageBase64;
+        const imageBuffer = Buffer.from(imageBase64.split(',')[1], 'base64');
+
+        // Create the new user object
+        const user = new User({
+            name: req.body.name,
+            email: req.body.email,
+            image: imageBuffer,
+            password: passwordHash
+        });
+
+        // Save the user to the database
+        await user.save();
+
+        // Respond with a success message
+        res.status(201).json({
+            success: true,
+            message: 'Your Registration has been Completed!'
+        });
+    } catch (error) {
+        console.log(error, "hello");
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error'
+        });
+    }
+};
+
+
 
 const loadHome = async(req,res) => {
 
@@ -105,22 +121,34 @@ const logout = async(req, res) =>{
 }
 
 
-const getUserProfile = async(req, res) =>{
+const getUserProfile = async (req, res) => {
     try {
+        // Find the user with a case-insensitive match
+        var user = await User.findOne({ name: { $regex: req.query.name, $options: 'i' } });
+        
+        if (user) {
+            // Convert the image buffer to a base64 string if the image exists
+            let base64Image = "";
+            if (user.image) {
+                base64Image = user.image.toString('base64');
+            }
 
-        var user = await User.findOne({name:{$regex:req.query.name,$options:'i'}});
-        if(user){
-            res.send({success: true, data:user});
+            // Send the profile data with the base64 image string
+            res.send({
+                success: true,
+                data: {
+                    name: user.name,
+                    image: base64Image // base64-encoded image
+                }
+            });
+        } else {
+            res.send({ success: false, message: 'User not Found' });
         }
-        else{
-            res.send({success:false,message:'User not Found'});
-        }
-
-
     } catch (error) {
-        res.send({success:false,message:'User not Found1'});
+        res.send({ success: false, message: 'User not Found1' });
     }
-}
+};
+
 
 module.exports = {
     loadLogin,
