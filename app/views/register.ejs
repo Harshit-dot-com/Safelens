@@ -1,0 +1,97 @@
+<%- include('layouts/header.ejs') %>
+
+<div class="login-wrap">
+    <div class="row">
+        <div class="col s12 m8 l4 offset-m2 offset-l4">
+            <div class="card">
+                <div class="card-action teal lighten-1 white-text">
+                    <h3>Register</h3>
+                </div>
+                <div class="card-content">
+                    <form id="registrationForm">
+                        <div class="form-field">
+                            <label for="file">Image</label><br>
+                            <input type="file" name="image" id="image" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="name">Name</label>
+                            <input type="text" name="name" id="name" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="email">Email</label>
+                            <input type="email" name="email" id="email" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="password">Password</label>
+                            <input type="password" name="password" id="password" required>
+                        </div>
+                        <br>
+                        <div class="form-field">
+                            <button type="button" onclick="submitForm()" class="webrtc-login btn-large waves-effect waves-dark">
+                                Register
+                            </button>
+                            <button class="webrtc-login btn-large waves-effect waves-dark">
+                                <a href="/" style="color: white;">Login</a>
+                            </button>
+                        </div>
+                    </form>
+
+                    <% if (typeof success !== 'undefined') { %>
+                        <% if (success) { %>
+                            <p style="color:green;"><%= message %></p>
+                        <% } else { %>
+                            <p style="color:red;"><%= message %></p>
+                        <% } %>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function submitForm() {
+    const form = document.getElementById('registrationForm');
+    const formData = new FormData(form);
+
+    // Convert image to Base64 string
+    const fileReader = new FileReader();
+    const imageFile = document.getElementById('image').files[0];
+
+    fileReader.onload = function(event) {
+        const imageBase64 = event.target.result;
+        formData.append('imageBase64', imageBase64);
+
+        // Remove the original file input as we are sending imageBase64
+        formData.delete('image');
+
+        sendData(formData);
+    };
+
+    if (imageFile) {
+        fileReader.readAsDataURL(imageFile);
+    } else {
+        console.error('No image file selected.');
+    }
+}
+
+function sendData(formData) {
+    fetch('/register', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector('.card-content').innerHTML += `<p style="color:green;">${data.message}</p>`;
+        } else {
+            document.querySelector('.card-content').innerHTML += `<p style="color:red;">${data.message}</p>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+
+<%- include('layouts/footer.ejs') %>
