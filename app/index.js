@@ -7,9 +7,7 @@ var mongoose = require('mongoose');
 
 mongoose.connect('mongodb+srv://harshitkumar4977:euaQJtI8WxjVE6c1@harshit.jus48fd.mongodb.net/VideoCallDB');
 
-app.listen(3000, ()=>{
-    console.log('Server is running');
-});
+
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
@@ -22,22 +20,34 @@ app.use(express.static('public'));
 
 const userRoute = require('./routes/userRoute');
 app.use('/',userRoute);
+const server = require('http').Server(app);
 
-var webSocketServ = require('ws').Server;
-
-var wss = new webSocketServ({
-    port: process.env.WS_PORT || 8000
+const io = require('socket.io')(server, {
+    cors: {
+        origin: "*", // Allow all origins, you can restrict this to specific domains in production
+        methods: ["GET", "POST"]
+    }
 });
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+// var webSocketServ = require('ws').Server;
+
+// var wss = new webSocketServ({
+//     port: process.env.WS_PORT || 8000
+// });
 
 // Event listener for server listening
-wss.on('listening', function() {
-    console.log('WebSocket server is listening on port ' + wss.options.port);
-});
-function sentToOtherUser(connection, message){
-    connection.send(JSON.stringify(message));
+
+function sentToOtherUser(socket, message){
+    console.log(message);
+    socket.emit('message', JSON.stringify(message));
 }
 var users = {};
-wss.on("connection",function(conn){
+io.on("connection",function(conn){
     console.log('user connected');
     conn.on("message",function(message){
         var data;
@@ -157,8 +167,9 @@ wss.on("connection",function(conn){
 
     });
 
-    conn.on("close",function(message){
+    conn.on("disconnect",function(message){
         console.log("connection closed");
+        delete users[conn.name];
     });
 
 });

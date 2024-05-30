@@ -1,28 +1,39 @@
-var connection;
+// var connection;
 
-// Check if the environment is browser or Node.js
+// // Check if the environment is browser or Node.js
 
 
-// Check if the environment is browser or Node.js
-if (typeof window !== 'undefined') {
-    // Browser environment
-    var hostname = window.location.hostname;
-    var protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-    connection = new WebSocket(protocol + hostname + ':' + port1);
-} else {
-    // Node.js environment (e.g., for server-side rendering)
-    var hostname = 'localhost'; // Default to localhost
-    if (process.env.HOSTNAME) {
-        hostname = process.env.HOSTNAME; // Use environment variable if available
-    }
-    connection = new WebSocket("ws://" + hostname + ':' + port1);
-}
-connection.onerror = function (error) {
-    console.error('WebSocket connection error:', error);
-};
+// // Check if the environment is browser or Node.js
+// if (typeof window !== 'undefined') {
+//     // Browser environment
+//     var hostname = window.location.hostname;
+//     var protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+//     connection = new WebSocket(protocol + hostname + ':' + port1);
+// } else {
+//     // Node.js environment (e.g., for server-side rendering)
+//     var hostname = 'localhost'; // Default to localhost
+//     if (process.env.HOSTNAME) {
+//         hostname = process.env.HOSTNAME; // Use environment variable if available
+//     }
+//     connection = new WebSocket("ws://" + hostname + ':' + port1);
+// }
+const socket = io();
 
-connection.onmessage = function(msg){
-    var data = JSON.parse(msg.data);
+socket.on('connect', function() {
+    console.log('Connected to Socket.IO server');
+});
+
+// connection.onerror = function (error) {
+//     console.error('WebSocket connection error:', error);
+// };
+
+socket.on('error',function(error){
+    console.log('socket.io connect error',error);
+})
+
+socket.on('message',function(msg){
+    console.log(msg);
+    var data = JSON.parse(msg);
 
     switch(data.type){
         case "online":
@@ -104,11 +115,11 @@ connection.onmessage = function(msg){
             leaveProcess();
         break;
     }
-}
+});
 
-connection.onerror = function(error){
-    console.log(error);
-}
+// connection.onerror = function(error){
+//     console.log(error);
+// }
 
 var name;
 var connectedUser;
@@ -163,7 +174,7 @@ call_btn.addEventListener("click",function(){
 
 
 setTimeout(function(){
-    if(connection.readyState==1){
+    if(socket.connected==1){
         if(username!=null){
             name = username;
             console.log('username is ' + name);
@@ -182,7 +193,7 @@ function send(message){
     if(connectedUser){
         message.name = connectedUser;
     }
-    connection.send(JSON.stringify(message));
+    socket.emit('message', JSON.stringify(message));
 
 }
 
