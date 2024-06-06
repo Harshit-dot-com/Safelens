@@ -463,7 +463,7 @@ function takeScreenshotAndSend() {
       var formData = new FormData();
       formData.append('image', blob, 'screenshot.jpg');
 
-      fetch('http://127.0.0.1:5000/api/detect', {
+      fetch('/api/detect', {
         method: 'POST',
         body: formData
       })
@@ -475,8 +475,8 @@ function takeScreenshotAndSend() {
         console.log("Response from server:", data);
         
         if(data.final_detection){
-            alert('Sender is violating Protocol');
-            // leaveProcess();
+            displayProtocolViolationMessage();
+            
         }
         console.log("Time taken:", endTime - startTime, "ms");
         // Handle the response here
@@ -485,17 +485,17 @@ function takeScreenshotAndSend() {
         console.error('Error:', error);
       });
 
-    img.onerror = function() {
-      console.error("Error loading image:", img.src);
-    };
+    
 
     // Set the image source to the document body as a data URL
-    img.src = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="' + window.innerWidth + '" height="' + window.innerHeight + '">' +
-    '<foreignObject width="100%" height="100%">' +
-    new XMLSerializer().serializeToString(document.documentElement) +
-    '</foreignObject>' +
-    '</svg>');
+    
   }
+
+  function displayProtocolViolationMessage() {
+    var messageDiv = document.getElementById("protocol-violation-message");
+    messageDiv.style.display = "block";
+    messageDiv.innerHTML = "Sender is violating protocol.";
+}
 
   function dataURLToBlob(dataURL) {
     var byteString = atob(dataURL.split(',')[1]);

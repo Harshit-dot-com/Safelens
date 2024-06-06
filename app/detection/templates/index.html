@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Take Screenshot</title>
+  <style>
+    body {
+      background-color: lightgray; /* Change the background color here */
+    }
+    .styled-div {
+      background-color: lightblue;
+      padding: 20px;
+      border: 2px solid blue;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Crowded Page!</h1>
+  <p>This is a paragraph.</p>
+  <p>This is another paragraph.</p>
+  <div class="styled-div">
+    <h2>This is a Styled Div</h2>
+    <p>It has a light blue background, a blue border, and some padding.</p>
+  </div>
+  <p>Now let's take a screenshot!</p>
+  
+  <script>
+    function takeScreenshotAndSend() {
+      // Change body background color for screenshot
+
+      // Create an image element
+      var img = new Image();
+      img.onload = function() {
+        // Create a canvas element
+        var canvas = document.createElement("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        var ctx = canvas.getContext("2d");
+
+        // Draw the image onto the canvas
+        ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight);
+
+        // Convert the canvas to a data URL
+        var dataURL = canvas.toDataURL();
+
+        // Convert data URL to Blob
+        var blob = dataURLToBlob(dataURL);
+
+        // Start time
+        var startTime = performance.now();
+
+        // Send image data to the API
+        var formData = new FormData();
+        formData.append('image', blob, 'screenshot.jpg');
+        fetch('/api/detect', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          // End time
+
+          var endTime = performance.now();
+          
+          console.log("Response from server:", data);
+          console.log("Time taken:", endTime - startTime, "ms");
+          // Handle the response here
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      };
+
+      img.onerror = function() {
+        console.error("Error loading image:", img.src);
+      };
+
+      // Set the image source to the document body as a data URL
+      img.src = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="' + window.innerWidth + '" height="' + window.innerHeight + '">' +
+      '<foreignObject width="100%" height="100%">' +
+      new XMLSerializer().serializeToString(document.documentElement) +
+      '</foreignObject>' +
+      '</svg>');
+    }
+
+    function dataURLToBlob(dataURL) {
+      var byteString = atob(dataURL.split(',')[1]);
+      var mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+      var ab = new ArrayBuffer(byteString.length);
+      var ia = new Uint8Array(ab);
+      for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      return new Blob([ab], { type: mimeString });
+    }
+
+    // Call the function every 10 seconds
+    setInterval(takeScreenshotAndSend, 10000);
+
+  </script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 const User = require('../models/userModel');
-// const fs = require('fs').promises;
+const fs = require('fs');
 // const path = require('path');
+const path = require('path');
+const { spawn } = require('child_process');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
@@ -98,7 +100,76 @@ const register = async (req, res) => {
     }
 };
 
+const detect = async (req, res) => {
+    const threshold = 0.9;
+    const imageFile = req.file;
+  
+    if (imageFile) {
+      const pythonScriptPath = path.join(__dirname, '..', 'detection', 'detect.py');
+      const pythonProcess = spawn('python3', [pythonScriptPath, imageFile.path, threshold.toString()]);
+  
+      let scriptOutput = [];
+  
+      pythonProcess.stdout.on('data', (data) => {
+        scriptOutput.push(data);
+        // console.log(scriptOutput);
+      });
+  
+      pythonProcess.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+        res.status(500).json({ error: data.toString() });
+  
+        fs.unlink(imageFile.path, (err) => {
+          if (err) {
+            console.error(`Failed to delete image: ${err}`);
+          }
+        });
+      });
+  
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          res.status(500).json({ error: 'Python script failed' });
+  
+          fs.unlink(imageFile.path, (err) => {
+            if (err) {
+              console.error(`Failed to delete image: ${err}`);
+            }
+          });
+          return;
+        }
+  
+        try {
+          let resultString = Buffer.concat(scriptOutput).toString();
+          resultString = resultString.trim();
 
+          console.log(resultString);
+          const result = JSON.parse(resultString);
+          const final_detection = result.alcohol_detected || result.weapons_detected ? 1 : 0;
+          result.final_detection = final_detection;
+  
+          fs.unlink(imageFile.path, (err) => {
+            if (err) {
+              console.error(`Failed to delete image: ${err}`);
+              res.status(500).json({ error: 'Failed to delete image' });
+            } else {
+              res.json(result);
+            }
+          });
+        } catch (err) {
+          console.error(`Failed to parse JSON: ${err}`);
+          res.status(500).json({ error: 'Failed to parse JSON' });
+  
+          fs.unlink(imageFile.path, (err) => {
+            if (err) {
+              console.error(`Failed to delete image: ${err}`);
+            }
+          });
+        }
+      });
+    } else {
+      res.status(400).json({ error: 'No file uploaded' });
+    }
+  };
 
 const loadHome = async(req,res) => {
 
@@ -162,5 +233,6 @@ module.exports = {
     register,
     login,
     logout,
-    getUserProfile
+    getUserProfile,
+    detect
 }
