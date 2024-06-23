@@ -1,10 +1,10 @@
 # Safelens - Noble Vision
 
-Safelens is a video calling application built using WebRTC technology, primarily leveraging Node.js and EJS. It facilitates one-on-one video calls while incorporating a unique feature to detect explicit content shared between users in real-time.
+Safelens is a video calling application utilizing WebRTC technology, primarily built with Node.js and EJS. It enables one-on-one video calls and features a unique capability to detect explicit content shared between users in real-time, taking appropriate actions as needed.
 
 ## How it Works
 
-Safelens integrates a content monitoring system that periodically captures screenshots of users' web browsers during video calls. These screenshots are then analyzed using a Python child process to detect explicit content. If such content is detected, appropriate actions can be taken to ensure a safe and secure communication environment.
+Safelens integrates a content monitoring system that periodically captures screenshots of users' web browsers during video calls. These screenshots are then analyzed using a model to detect explicit content. If such content is detected, appropriate actions can be taken to ensure a safe and secure communication environment.
 
 ## Usage
 
